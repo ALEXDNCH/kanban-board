@@ -1,0 +1,76 @@
+@forward "reset";
+@forward "templates";
+
+:root {
+	--color-text: #000;
+	--color-text-light: rgba(0, 0, 0, 0.3);
+	--color-text-muted: rgba(0, 0, 0, 0.6);
+
+	--bg-app: #fff;
+	--bg-column: #ECEFF2;
+	--bg-card: #ffffff;
+	--border-color: #E0E3E6;
+
+	--main-btn-color: #CED9E3;
+	--main-btn-color-hover: #aebecd;
+
+	--border-radius: 8px;
+	--spacing: 16px;
+	--shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	--transition: 0.3s ease;
+}
+
+body{
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	font-family: "Inter", sans-serif;
+}
+
+.container {
+	max-width: 1400px;
+	margin: 0 auto;
+	padding: 0 4px;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+	font-family: "Inter", sans-serif;
+	background: var(--bg-app);
+	color: var(--color-text);
+}
+
+.container {
+	max-width: 1400px;
+	margin: 0 auto;
+	padding: 0 4px;
+}
+
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: calc(var(--spacing) * 0.25);
+	padding: calc(var(--spacing) * 0.5);
+	border: none;
+	border-radius: 8px;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: background-color var(--transition);
+	white-space: nowrap;
+	background: var(--main-btn-color);
+	font-family: inherit;
+
+	&:hover{
+		background: var(--main-btn-color-hover);
+	}
+}
+
+
+
