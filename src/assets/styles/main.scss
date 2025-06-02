@@ -19,6 +19,11 @@
 	--spacing: 16px;
 	--shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 	--transition: 0.3s ease;
+
+	/* Drag & Drop */
+	--drop-zone-color: var(--color-primary);
+	--drop-zone-bg: rgba(66, 133, 244, 0.1);
+	--drag-rotation: 5deg;
 }
 
 body{
@@ -62,8 +67,12 @@ body {
 	background: var(--main-btn-color);
 	font-family: inherit;
 
-	&:hover{
+	&:hover:not(:disabled){
 		background: var(--main-btn-color-hover);
+	}
+	&:disabled{
+		cursor: not-allowed;
+		opacity: 0.5;
 	}
 }
 

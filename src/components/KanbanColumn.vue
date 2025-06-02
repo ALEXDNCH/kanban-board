@@ -1,15 +1,23 @@
 <template>
-  <div class="kanban-column">
+  <div
+    class="kanban-column"
+    :class="{ 'kanban-column--drag-over': isDragOver, 'opacity': editingDisabled }"
+    @dragover="handleDragOver"
+    @dragenter="handleDragEnter"
+    @dragleave="handleDragLeave"
+    @drop="handleDrop"
+  >
     <div class="kanban-column__header">
       <div class="kanban-column__title-wrapper">
-        <h3 class="kanban-column__title">{{ column.title }}</h3>
+        <h3 class="kanban-column__title" contenteditable="true">{{ column.title }}</h3>
         <span class="kanban-column__count">{{ column.cards.length }}</span>
       </div>
 
       <div class="kanban-column__actions">
         <ActionButton @click="toggleEditing">
           <template #icon>
-            <img src="@/assets/images/pause.svg" alt="Toggle editing">
+            <img v-if="!editingDisabled" src="@/assets/images/pause.svg" alt="Icon">
+            <img v-else src="@/assets/images/resume.svg" alt="Icon">
           </template>
           {{ editingDisabled ? 'Enable' : 'Disable' }} Editing
         </ActionButton>
@@ -23,16 +31,28 @@
       </div>
     </div>
 
-    <!-- Карточки -->
     <div class="kanban-column__cards">
-      <KanbanCard
-        v-for="card in column.cards"
+      <div
+        v-for="(card, index) in column.cards"
         :key="card.id"
-        :card="card"
-        :editing-disabled="editingDisabled"
-        @update-card="updateCard(card.id, $event)"
-        @delete-card="deleteCard(card.id)"
-      />
+        class="card-wrapper"
+        :class="{ 'card-wrapper--drop-target': dropIndex === index }"
+        @dragover="handleCardDragOver($event, index)"
+      >
+        <KanbanCard
+          :card="card"
+          :column-id="column.id"
+          :editing-disabled="editingDisabled"
+          @update-card="updateCard(card.id, $event)"
+          @delete-card="deleteCard(card.id)"
+        />
+      </div>
+
+      <!-- Показываем линию для вставки в конец, если нужно -->
+      <div
+        v-if="dropIndex === column.cards.length"
+        class="drop-line"
+      ></div>
     </div>
 
     <button
@@ -64,24 +84,16 @@
   </div>
 </template>
 
-
 <script setup>
-import {ref} from 'vue'
+import { ref } from 'vue'
 import KanbanCard from './KanbanCard.vue'
 import ActionButton from './UI/Buttons/ActionButton.vue'
 import SortIcon from '@/components/UI/Icons/SortIcon.vue'
 
 const props = defineProps({
-  column: {
-    type: Object,
-    required: true
-  },
-  editingDisabled: {
-    type: Boolean,
-    default: false
-  }
+  column: { type: Object, required: true },
+  editingDisabled: { type: Boolean, default: false }
 })
-
 
 const emit = defineEmits([
   'update-column',
@@ -89,19 +101,122 @@ const emit = defineEmits([
   'add-card',
   'update-card',
   'delete-card',
+  'move-card',
+  'reorder-card',
   'sort-cards',
   'clear-cards',
   'toggle-editing'
 ])
 
+const isDragOver = ref(false)
+const sortDirection = ref('none')
+const dropIndex = ref(-1)
+
+const handleDragOver = (event) => {
+  event.preventDefault()
+  isDragOver.value = true
+
+  // Вычисляем позицию drop
+  calculateDropPosition(event)
+}
+
+const handleDragEnter = (event) => {
+  event.preventDefault()
+  isDragOver.value = true
+}
+
+const handleDragLeave = (event) => {
+  const rect = event.currentTarget.getBoundingClientRect()
+  const x = event.clientX
+  const y = event.clientY
+
+  if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+    isDragOver.value = false
+    dropIndex.value = -1
+  }
+}
+
+const calculateDropPosition = (event) => {
+  const mouseY = event.clientY
+  const cardElements = event.currentTarget.querySelectorAll('.card-wrapper')
+
+  if (cardElements.length === 0) {
+    dropIndex.value = 0
+    return
+  }
+
+  for (let i = 0; i < cardElements.length; i++) {
+    const cardRect = cardElements[i].getBoundingClientRect()
+    const cardMidPoint = cardRect.top + cardRect.height / 2
+
+    if (mouseY < cardMidPoint) {
+      dropIndex.value = i
+      return
+    }
+  }
+
+  // Если ниже всех карточек
+  dropIndex.value = cardElements.length
+}
+
+const handleCardDragOver = (event, index) => {
+  event.preventDefault()
+  event.stopPropagation()
+
+  const rect = event.currentTarget.getBoundingClientRect()
+  const midPoint = rect.top + rect.height / 2
+
+  if (event.clientY < midPoint) {
+    dropIndex.value = index
+  } else {
+    dropIndex.value = index + 1
+  }
+}
+
+const handleDrop = (event) => {
+  event.preventDefault()
+  isDragOver.value = false
+
+  try {
+    const data = event.dataTransfer.getData('text/plain')
+    const dragData = JSON.parse(data)
+
+    if (dragData.sourceColumnId === props.column.id) {
+      // Перестановка внутри колонки
+      if (dropIndex.value >= 0) {
+        const currentIndex = props.column.cards.findIndex(c => c.id === dragData.cardId)
+
+        if (currentIndex !== dropIndex.value && currentIndex !== dropIndex.value - 1) {
+          emit('reorder-card', {
+            columnId: props.column.id,
+            cardId: dragData.cardId,
+            newIndex: dropIndex.value
+          })
+        }
+      }
+    } else {
+      // Перемещение между колонками
+      emit('move-card', {
+        cardId: dragData.cardId,
+        sourceColumnId: dragData.sourceColumnId,
+        targetColumnId: props.column.id,
+        targetIndex: dropIndex.value >= 0 ? dropIndex.value : props.column.cards.length
+      })
+    }
+  } catch (error) {
+    console.error('Error handling drop:', error)
+  }
+
+  dropIndex.value = -1
+}
+
 const updateCard = (cardId, updates) => {
   emit('update-card', props.column.id, cardId, updates)
 }
+
 const deleteCard = (cardId) => {
   emit('delete-card', props.column.id, cardId)
 }
-
-const sortDirection = ref('none') // 'none', 'asc', 'desc'
 
 const sortCards = () => {
   if (sortDirection.value === 'none' || sortDirection.value === 'desc') {
@@ -109,21 +224,19 @@ const sortCards = () => {
   } else {
     sortDirection.value = 'desc'
   }
-
   emit('sort-cards', props.column.id, sortDirection.value)
 }
 
 const clearAll = () => {
   if (confirm(`Вы уверены, что хотите очистить все карточки в колонке "${props.column.title}"?`)) {
     sortDirection.value = 'none'
-
     emit('clear-cards', props.column.id)
   }
 }
 
 const addCard = () => {
-  if (props.editingDisabled) return;
-  emit('add-card', props.column.id, true);
+  if (props.editingDisabled) return
+  emit('add-card', props.column.id, true)
 }
 
 const deleteColumn = () => {
@@ -141,17 +254,29 @@ const toggleEditing = () => {
 }
 </script>
 
-
-<style scoped>
+<style scoped lang="scss">
 .kanban-column {
   background: var(--bg-column);
   border-radius: var(--border-radius);
+  border: 2px dashed transparent;
   padding: var(--spacing);
   min-height: 600px;
   display: flex;
   min-width: 440px;
   width: 100%;
   flex-direction: column;
+  transition: all 0.3s ease;
+  &.opacity{
+    background: #FAFBFC;
+    & .kanban-column__title-wrapper{
+      opacity: .5;
+    }
+  }
+
+  &--drag-over {
+    border-color: var(--card-border-color);
+    background: rgba(66, 133, 244, 0.05);
+  }
 }
 
 .kanban-column__header {
@@ -189,6 +314,29 @@ const toggleEditing = () => {
   margin-bottom: var(--spacing);
 }
 
+.card-wrapper {
+  position: relative;
+
+  &--drop-target::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background-color: var(--card-border-color);
+    border-radius: 2px;
+    z-index: 10;
+  }
+}
+
+.drop-line {
+  height: 4px;
+  background-color: var(--card-border-color);
+  border-radius: 2px;
+  margin-top: -2px;
+}
+
 .kanban-column__footer {
   display: flex;
   flex-direction: column;
@@ -200,7 +348,7 @@ const toggleEditing = () => {
   width: 100%;
 }
 
-.kanban-column__sort-actions{
+.kanban-column__sort-actions {
   margin: 10px auto 0;
   display: flex;
   align-items: center;

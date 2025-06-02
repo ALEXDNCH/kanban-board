@@ -12,8 +12,11 @@
           @add-card="addCard"
           @update-card="updateCard"
           @delete-card="deleteCard"
+          @move-card="moveCard"
+          @reorder-card="reorderCard"
           @sort-cards="sortCards"
           @clear-cards="clearCards"
+          @toggle-editing="toggleEditing"
         />
       </div>
 
@@ -31,15 +34,12 @@
 </template>
 
 <script setup>
-import { nextTick } from 'vue'
 import KanbanColumn from './KanbanColumn.vue'
 import BoardActions from './BoardActions.vue'
 import { useKanbanStorage } from '@/composables/useKanbanStorage'
 
-// Получаем реактивное состояние с автосохранением
 const { boardState } = useKanbanStorage()
 
-// Методы управления колонками
 const addColumn = () => {
   boardState.columns.push({
     id: Date.now(),
@@ -47,6 +47,28 @@ const addColumn = () => {
     cards: []
   })
 }
+
+const reorderCard = (reorderData) => {
+  const { columnId, cardId, newIndex } = reorderData
+  const column = boardState.columns.find(c => c.id === columnId)
+
+  if (column) {
+    const currentIndex = column.cards.findIndex(c => c.id === cardId)
+
+    if (currentIndex > -1 && currentIndex !== newIndex) {
+      // Удаляем карточку из текущей позиции
+      const [card] = column.cards.splice(currentIndex, 1)
+
+      // Вставляем в новую позицию
+      const insertIndex = newIndex > currentIndex ? newIndex - 1 : newIndex
+      column.cards.splice(insertIndex, 0, card)
+
+      console.log(`Reordered card ${cardId} from index ${currentIndex} to ${insertIndex}`)
+    }
+  }
+}
+
+
 
 const updateColumn = (columnId, updates) => {
   const column = boardState.columns.find(c => c.id === columnId)
@@ -62,6 +84,7 @@ const deleteColumn = (columnId) => {
   }
 }
 
+// Card methods
 const addCard = (columnId, autoEdit = false) => {
   const column = boardState.columns.find(c => c.id === columnId)
   if (column) {
@@ -70,7 +93,7 @@ const addCard = (columnId, autoEdit = false) => {
       title: '',
       description: '',
       createdAt: new Date().toISOString(),
-      autoEdit: autoEdit 
+      autoEdit: autoEdit
     }
     column.cards.push(newCard)
   }
@@ -96,6 +119,28 @@ const deleteCard = (columnId, cardId) => {
   }
 }
 
+const moveCard = (moveData) => {
+  const { cardId, sourceColumnId, targetColumnId, targetIndex } = moveData
+
+  const sourceColumn = boardState.columns.find(c => c.id === sourceColumnId)
+  const targetColumn = boardState.columns.find(c => c.id === targetColumnId)
+
+  if (sourceColumn && targetColumn) {
+    const cardIndex = sourceColumn.cards.findIndex(c => c.id === cardId)
+
+    if (cardIndex > -1) {
+      const [card] = sourceColumn.cards.splice(cardIndex, 1)
+
+      // Вставляем в конкретную позицию или в конец
+      const insertIndex = targetIndex !== undefined ? targetIndex : targetColumn.cards.length
+      targetColumn.cards.splice(insertIndex, 0, card)
+
+      console.log(`Moved card ${cardId} from ${sourceColumnId} to ${targetColumnId} at index ${insertIndex}`)
+    }
+  }
+}
+
+// Board actions
 const sortCards = (columnId, direction) => {
   const column = boardState.columns.find(c => c.id === columnId)
   if (column) {
@@ -113,35 +158,18 @@ const clearCards = (columnId) => {
   }
 }
 
-// Board actions
 const shuffleColumns = () => {
-  // Создаем новый массив для реактивности
   boardState.columns = [...boardState.columns].sort(() => Math.random() - 0.5)
 }
 
 const shuffleCards = () => {
   boardState.columns.forEach(column => {
-    // Создаем новый массив для реактивности
     column.cards = [...column.cards].sort(() => Math.random() - 0.5)
   })
 }
 
 const toggleEditing = () => {
   boardState.editingDisabled = !boardState.editingDisabled
-}
-
-// Методы для drag & drop (будут использоваться позже)
-const moveCard = (cardId, fromColumnId, toColumnId) => {
-  const fromColumn = boardState.columns.find(c => c.id === fromColumnId)
-  const toColumn = boardState.columns.find(c => c.id === toColumnId)
-
-  if (fromColumn && toColumn && fromColumn !== toColumn) {
-    const cardIndex = fromColumn.cards.findIndex(c => c.id === cardId)
-    if (cardIndex > -1) {
-      const [card] = fromColumn.cards.splice(cardIndex, 1)
-      toColumn.cards.push(card)
-    }
-  }
 }
 </script>
 
@@ -153,9 +181,10 @@ const moveCard = (cardId, fromColumnId, toColumnId) => {
 
 .kanban-board__columns {
   display: flex;
-  overflow: auto;
+  overflow-x: auto;
   gap: var(--spacing);
   margin-bottom: calc(var(--spacing) * 2);
+  padding-bottom: var(--spacing);
 }
 
 .kanban-board__actions {

@@ -25,7 +25,8 @@
 
       <ActionButton @click="$emit('toggle-editing')">
         <template #icon>
-          <img src="@/assets/images/pause.svg" alt="Icon">
+          <img v-if="!editingDisabled" src="@/assets/images/pause.svg" alt="Icon">
+          <img v-else src="@/assets/images/resume.svg" alt="Icon">
         </template>
         {{ editingDisabled ? 'Enable' : 'Disable' }} Editing
       </ActionButton>
@@ -36,6 +37,14 @@
 
 <script setup>
 import ActionButton from '@/components/UI/Buttons/ActionButton.vue'
+
+defineProps({
+  editingDisabled: {
+    type: Boolean,
+    default: false
+  }
+})
+defineEmits(['toggle-editing'])
 </script>
 
 <style scoped lang="scss">

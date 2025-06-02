@@ -1,7 +1,13 @@
 <template>
   <div
     class="kanban-card"
-    :class="{ 'kanban-card--editing': isEditing }"
+    :class="{
+      'kanban-card--editing': isEditing,
+      'kanban-card--dragging': isDragging
+    }"
+    draggable="true"
+    @dragstart="handleDragStart"
+    @dragend="handleDragEnd"
     @dblclick="startEditing"
     @contextmenu.prevent="deleteCard"
   >
@@ -62,17 +68,40 @@ import ActionButton from './UI/Buttons/ActionButton.vue'
 
 const props = defineProps({
   card: { type: Object, required: true },
+  columnId: { type: [String, Number], required: true },
   editingDisabled: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['update-card', 'delete-card'])
 
+const isDragging = ref(false)
 const isEditing = ref(false)
 const titleRef = ref(null)
 const descriptionRef = ref(null)
 const originalTitle = ref('')
 const originalDescription = ref('')
 const hasChanges = ref(false)
+
+// Drag handlers
+const handleDragStart = (event) => {
+  if (isEditing.value || props.editingDisabled) {
+    event.preventDefault()
+    return
+  }
+
+  isDragging.value = true
+
+  // Простые данные для передачи
+  event.dataTransfer.setData('text/plain', JSON.stringify({
+    cardId: props.card.id,
+    sourceColumnId: props.columnId
+  }))
+}
+
+const handleDragEnd = () => {
+  isDragging.value = false
+  console.log('Drag ended')
+}
 
 const updateHasChanges = () => {
   if (!isEditing.value) return
@@ -83,7 +112,6 @@ const updateHasChanges = () => {
   hasChanges.value = currentTitle !== originalTitle.value ||
     currentDescription !== originalDescription.value
 }
-
 
 onMounted(() => {
   if (props.card.autoEdit && !props.editingDisabled) {
@@ -124,15 +152,14 @@ const startEditing = async () => {
 
   if (titleRef.value) {
     titleRef.value.focus()
-    titleRef.value.textContent = originalTitle.value
+    titleRef.value.innerHTML = originalTitle.value.replace(/\n/g, '<br>')
   }
 
   if (descriptionRef.value) {
-    descriptionRef.value.textContent = originalDescription.value
+    descriptionRef.value.innerHTML = originalDescription.value.replace(/\n/g, '<br>')
   }
 }
 
-// Сохранение
 const saveChanges = () => {
   if (!isEditing.value) return
 
@@ -161,7 +188,6 @@ const handleBlur = (event) => {
   }, 100)
 }
 
-// Удаление карточки
 const deleteCard = () => {
   if (props.editingDisabled) return
 
@@ -186,6 +212,13 @@ const deleteCard = () => {
 
   &:hover {
     transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  &--dragging {
+    opacity: 0.5;
+    transform: rotate(5deg) scale(1.05);
+    z-index: 1000;
   }
 
   &--editing {
@@ -230,12 +263,7 @@ const deleteCard = () => {
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 10; // максимум 2 строки
-  -webkit-box-orient: vertical;
-  line-height: 1.3;
-  max-height: calc(1.3em * 10); // высота для 2 строк
-
+  text-overflow: ellipsis;
 
   &.description-has {
     font-weight: 500;
@@ -283,6 +311,10 @@ const deleteCard = () => {
   cursor: grab;
   opacity: 0;
   transition: opacity var(--transition);
+
+  &:active {
+    cursor: grabbing;
+  }
 }
 
 .kanban-card:hover .kanban-card__drag-handle {
