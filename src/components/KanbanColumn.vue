@@ -7,14 +7,14 @@
       </div>
 
       <div class="kanban-column__actions">
-        <ActionButton >
+        <ActionButton @click="toggleEditing">
           <template #icon>
-            <img src="@/assets/images/pause.svg" alt="Disable">
+            <img src="@/assets/images/pause.svg" alt="Toggle editing">
           </template>
-          Disable Editing
+          {{ editingDisabled ? 'Enable' : 'Disable' }} Editing
         </ActionButton>
 
-        <ActionButton @click="deleteColumn">
+        <ActionButton @click="deleteColumn" :disabled="editingDisabled">
           <template #icon>
             <img src="@/assets/images/minus.svg" alt="Delete">
           </template>
@@ -29,25 +29,31 @@
         v-for="card in column.cards"
         :key="card.id"
         :card="card"
+        :editing-disabled="editingDisabled"
+        @update-card="updateCard(card.id, $event)"
+        @delete-card="deleteCard(card.id)"
       />
     </div>
 
-    <button class="btn full-width" @click="addCard">
+    <button
+      class="btn full-width"
+      @click="addCard"
+      :disabled="editingDisabled"
+    >
       <img src="@/assets/images/plus.svg" alt="Plus">
       New Card
     </button>
 
     <div class="kanban-column__footer">
-
       <div class="kanban-column__sort-actions">
-        <ActionButton @click="sortCards">
+        <ActionButton @click="sortCards" :disabled="editingDisabled">
           <template #icon>
             <SortIcon :direction="sortDirection"/>
           </template>
           Sort
         </ActionButton>
 
-        <ActionButton @click="clearAll">
+        <ActionButton @click="clearAll" :disabled="editingDisabled">
           <template #icon>
             <img src="@/assets/images/clear.svg" alt="Clear">
           </template>
@@ -58,37 +64,83 @@
   </div>
 </template>
 
+
 <script setup>
 import {ref} from 'vue'
 import KanbanCard from './KanbanCard.vue'
 import ActionButton from './UI/Buttons/ActionButton.vue'
 import SortIcon from '@/components/UI/Icons/SortIcon.vue'
 
-defineProps({
+const props = defineProps({
   column: {
     type: Object,
     required: true
+  },
+  editingDisabled: {
+    type: Boolean,
+    default: false
   }
 })
 
-const sortDirection = ref('desc');
+
+const emit = defineEmits([
+  'update-column',
+  'delete-column',
+  'add-card',
+  'update-card',
+  'delete-card',
+  'sort-cards',
+  'clear-cards',
+  'toggle-editing'
+])
+
+const updateCard = (cardId, updates) => {
+  emit('update-card', props.column.id, cardId, updates)
+}
+const deleteCard = (cardId) => {
+  emit('delete-card', props.column.id, cardId)
+}
+
+const sortDirection = ref('none') // 'none', 'asc', 'desc'
 
 const sortCards = () => {
-  // логика сортировки
+  if (sortDirection.value === 'none' || sortDirection.value === 'desc') {
+    sortDirection.value = 'asc'
+  } else {
+    sortDirection.value = 'desc'
+  }
+
+  emit('sort-cards', props.column.id, sortDirection.value)
 }
 
 const clearAll = () => {
-  // логика очистки
+  if (confirm(`Вы уверены, что хотите очистить все карточки в колонке "${props.column.title}"?`)) {
+    sortDirection.value = 'none'
+
+    emit('clear-cards', props.column.id)
+  }
 }
 
 const addCard = () => {
-  // логика добавления карточки
+  if (props.editingDisabled) return;
+  emit('add-card', props.column.id, true);
 }
 
 const deleteColumn = () => {
-  // логика удаления колонки
+  const confirmMessage = props.column.cards.length > 0
+    ? `Вы уверены, что хотите удалить колонку "${props.column.title}" со всеми карточками (${props.column.cards.length})?`
+    : `Вы уверены, что хотите удалить колонку "${props.column.title}"?`
+
+  if (confirm(confirmMessage)) {
+    emit('delete-column', props.column.id)
+  }
+}
+
+const toggleEditing = () => {
+  emit('toggle-editing')
 }
 </script>
+
 
 <style scoped>
 .kanban-column {
@@ -97,6 +149,8 @@ const deleteColumn = () => {
   padding: var(--spacing);
   min-height: 600px;
   display: flex;
+  min-width: 440px;
+  width: 100%;
   flex-direction: column;
 }
 
@@ -147,7 +201,7 @@ const deleteColumn = () => {
 }
 
 .kanban-column__sort-actions{
-  margin: 0 auto;
+  margin: 10px auto 0;
   display: flex;
   align-items: center;
   gap: calc(var(--spacing) * 0.5);

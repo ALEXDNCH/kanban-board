@@ -5,6 +5,7 @@
 	--color-text: #000;
 	--color-text-light: rgba(0, 0, 0, 0.3);
 	--color-text-muted: rgba(0, 0, 0, 0.6);
+	--card-border-color: #007AFF;
 
 	--bg-app: #fff;
 	--bg-column: #ECEFF2;
@@ -30,7 +31,7 @@ body{
 .container {
 	max-width: 1400px;
 	margin: 0 auto;
-	padding: 0 4px;
+	padding: 0 8px;
 }
 
 * {
@@ -43,12 +44,6 @@ body {
 	font-family: "Inter", sans-serif;
 	background: var(--bg-app);
 	color: var(--color-text);
-}
-
-.container {
-	max-width: 1400px;
-	margin: 0 auto;
-	padding: 0 4px;
 }
 
 .btn {
