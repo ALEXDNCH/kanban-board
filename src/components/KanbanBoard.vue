@@ -6,7 +6,6 @@
           v-for="column in boardState.columns"
           :key="column.id"
           :column="column"
-          :editing-disabled="boardState.editingDisabled"
           @update-column="updateColumn"
           @delete-column="deleteColumn"
           @add-card="addCard"
@@ -22,7 +21,7 @@
 
       <div class="kanban-board__actions">
         <BoardActions
-          :editing-disabled="boardState.editingDisabled"
+          :editing-disabled="editingDisabled"
           @new-column="addColumn"
           @shuffle-columns="shuffleColumns"
           @shuffle-cards="shuffleCards"
@@ -37,6 +36,7 @@
 import KanbanColumn from './KanbanColumn.vue'
 import BoardActions from './BoardActions.vue'
 import { useKanbanStorage } from '@/composables/useKanbanStorage'
+import { computed } from 'vue'
 
 const { boardState } = useKanbanStorage()
 
@@ -45,7 +45,8 @@ const addColumn = () => {
     id: Date.now(),
     title: 'New Column',
     cards: [],
-    editingDisabled: false
+    editingDisabled: false,
+    sortDirection: 'none'
   })
 }
 
@@ -57,14 +58,12 @@ const reorderCard = (reorderData) => {
     const currentIndex = column.cards.findIndex(c => c.id === cardId)
 
     if (currentIndex > -1 && currentIndex !== newIndex) {
-      // Удаляем карточку из текущей позиции
+      // Удаяем карточку из текущей позиции
       const [card] = column.cards.splice(currentIndex, 1)
 
       // Вставляем в новую позицию
       const insertIndex = newIndex > currentIndex ? newIndex - 1 : newIndex
       column.cards.splice(insertIndex, 0, card)
-
-      console.log(`Reordered card ${cardId} from index ${currentIndex} to ${insertIndex}`)
     }
   }
 }
@@ -85,7 +84,6 @@ const deleteColumn = (columnId) => {
   }
 }
 
-// Card methods
 const addCard = (columnId, autoEdit = false) => {
   const column = boardState.columns.find(c => c.id === columnId)
   if (column) {
@@ -95,7 +93,7 @@ const addCard = (columnId, autoEdit = false) => {
       description: '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      autoEdit: autoEdit
+      autoEdit: autoEdit,
     }
     column.cards.push(newCard)
   }
@@ -129,6 +127,7 @@ const moveCard = (moveData) => {
   const targetColumn = boardState.columns.find(c => c.id === targetColumnId)
 
   if (sourceColumn && targetColumn) {
+    targetColumn.sortDirection = 'none'
     const cardIndex = sourceColumn.cards.findIndex(c => c.id === cardId)
 
     if (cardIndex > -1) {
@@ -143,13 +142,14 @@ const moveCard = (moveData) => {
   }
 }
 
-// Board actions
 const sortCards = (columnId, direction) => {
   const column = boardState.columns.find(c => c.id === columnId)
   if (column) {
+    column.sortDirection = direction
     column.cards.sort((a, b) => {
-      const compareResult = a.title.localeCompare(b.title)
-      return direction === 'desc' ? -compareResult : compareResult
+      const aTime = new Date(a.createdAt).getTime()
+      const bTime = new Date(b.createdAt).getTime()
+      return direction === 'desc' ? bTime - aTime : aTime - bTime
     })
   }
 }
@@ -168,12 +168,19 @@ const shuffleColumns = () => {
 const shuffleCards = () => {
   boardState.columns.forEach(column => {
     column.cards = [...column.cards].sort(() => Math.random() - 0.5)
+    column.sortDirection = 'none'
   })
 }
 
+const editingDisabled = computed(() => boardState.columns.length > 0 && boardState.columns.every(column => column.editingDisabled))
+
 const toggleEditing = () => {
-  boardState.editingDisabled = !boardState.editingDisabled
+  const needEnable = editingDisabled.value === true
+  boardState.columns.forEach(column => {
+    column.editingDisabled = !needEnable
+  })
 }
+
 </script>
 
 <style scoped>
@@ -183,7 +190,8 @@ const toggleEditing = () => {
 }
 
 .kanban-board__columns {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   overflow-x: auto;
   gap: var(--spacing);
   margin-bottom: calc(var(--spacing) * 2);

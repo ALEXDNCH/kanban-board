@@ -17,6 +17,6 @@ export function dateFormat(dateStr) {
     const d = Math.floor(diff / 86400)
     return `Last edit ${d} day${d === 1 ? '' : 's'} ago`
   }
-  // Если больше месяца — показываем дату
+
   return 'Last edit ' + date.toLocaleDateString() + ' ' + date.toLocaleTimeString().slice(0, 5)
 }

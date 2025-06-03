@@ -1,7 +1,7 @@
 <template>
   <div
     class="kanban-column"
-    :class="{ 'kanban-column--drag-over': isDragOver, 'opacity': editingDisabled || column.editingDisabled }"
+    :class="{ 'kanban-column--drag-over': isDragOver, 'opacity': column.editingDisabled }"
     @dragover="handleDragOver"
     @dragenter="handleDragEnter"
     @dragleave="handleDragLeave"
@@ -9,20 +9,29 @@
   >
     <div class="kanban-column__header">
       <div class="kanban-column__title-wrapper">
-        <h3 class="kanban-column__title" contenteditable="true">{{ column.title }}</h3>
+        <h3
+          ref="titleRef"
+          class="kanban-column__title"
+          contenteditable="true"
+          @blur="saveTitle"
+          @keydown.enter.prevent="blurTitle"
+          @input="onInput"
+        >
+          {{ column.title }}
+        </h3>
         <span class="kanban-column__count">{{ column.cards.length }}</span>
       </div>
 
       <div class="kanban-column__actions">
         <ActionButton @click="toggleEditing">
           <template #icon>
-            <img v-if="!editingDisabled || !column.editingDisabled" src="@/assets/images/pause.svg" alt="Icon">
+            <img v-if="!column.editingDisabled" src="@/assets/images/pause.svg" alt="Icon">
             <img v-else src="@/assets/images/resume.svg" alt="Icon">
           </template>
-          {{ editingDisabled || column.editingDisabled ? 'Enable' : 'Disable' }} Editing
+          {{ column.editingDisabled ? 'Enable' : 'Disable' }} Editing
         </ActionButton>
 
-        <ActionButton v-if="!deleteDisabled" @click="deleteColumn" :disabled="editingDisabled || column.editingDisabled">
+        <ActionButton v-if="!deleteDisabled" @click="deleteColumn" :disabled="column.editingDisabled">
           <template #icon>
             <img src="@/assets/images/minus.svg" alt="Delete">
           </template>
@@ -42,7 +51,7 @@
         <KanbanCard
           :card="card"
           :column-id="column.id"
-          :editing-disabled="editingDisabled || column.editingDisabled"
+          :editing-disabled="column.editingDisabled"
           @update-card="updateCard(card.id, $event)"
           @delete-card="deleteCard(card.id)"
         />
@@ -58,7 +67,7 @@
     <button
       class="btn full-width"
       @click="addCard"
-      :disabled="editingDisabled || column.editingDisabled"
+      :disabled="column.editingDisabled"
     >
       <img src="@/assets/images/plus.svg" alt="Plus">
       New Card
@@ -67,14 +76,20 @@
 
     <div class="kanban-column__footer">
       <div class="kanban-column__sort-actions">
-        <ActionButton @click="sortCards" :disabled="editingDisabled || column.editingDisabled || column.cards.length < 2">
+        <ActionButton @click="sortCards" :disabled="column.editingDisabled || column.cards.length < 2">
           <template #icon>
             <SortIcon :direction="sortDirection"/>
           </template>
           Sort
+          <span
+            class="sort-direction"
+            v-if="sortDirection !== 'none'"
+          >
+            {{sortDirection}}
+          </span>
         </ActionButton>
 
-        <ActionButton @click="clearAll" :disabled="editingDisabled || column.editingDisabled || !column.cards.length">
+        <ActionButton @click="clearAll" :disabled="column.editingDisabled || !column.cards.length">
           <template #icon>
             <img src="@/assets/images/clear.svg" alt="Clear">
           </template>
@@ -99,8 +114,25 @@ const { openPopup } = useModal()
 
 const props = defineProps({
   column: { type: Object, required: true },
-  editingDisabled: { type: Boolean, default: false }
 })
+
+const titleRef = ref(null)
+const lastValue = ref(props.column.title)
+
+const blurTitle = () => {
+  titleRef.value && titleRef.value.blur()
+}
+const onInput = (event) => {
+  lastValue.value = event.target.innerText.trim()
+}
+const saveTitle = (event) => {
+  const newTitle = (event?.target?.innerText || '').trim()
+  if (newTitle && newTitle !== props.column.title) {
+    emit('update-column', props.column.id, { title: newTitle })
+  } else if (!newTitle) {
+    event.target.innerText = props.column.title
+  }
+}
 
 const deleteDisabled = computed(() => {
   return [0, 1, 2].includes(props.column.id)
@@ -130,7 +162,10 @@ const newestUpdatedCard = computed(() => {
 
 
 const isDragOver = ref(false)
-const sortDirection = ref('none')
+const sortDirection = computed({
+  get: () => props.column.sortDirection,
+  set: dir => emit('update-column', props.column.id, { sortDirection: dir })
+})
 const dropIndex = ref(-1)
 
 const handleDragOver = (event) => {
@@ -258,7 +293,7 @@ const clearAll = () => {
 }
 
 const addCard = () => {
-  if (props.editingDisabled || props.column.editingDisabled) return
+  if (props.column.editingDisabled) return
   emit('add-card', props.column.id, true)
 }
 
@@ -314,6 +349,11 @@ const toggleEditing = () => {
   font-size: 13px;
   font-weight: 600;
   gap: calc(var(--spacing) * 0.5);
+}
+
+.sort-direction{
+  font-size: 12px;
+  color: var(--color-text-light);
 }
 
 .kanban-column__title {

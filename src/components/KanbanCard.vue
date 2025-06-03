@@ -19,7 +19,7 @@
       @blur="handleBlur"
       @input="updateHasChanges"
     >
-      {{ isEditing ? undefined : card.title }}
+      {{ isEditing ? '' : card.title }}
     </h2>
 
     <div class="kanban-card__description">
@@ -35,7 +35,7 @@
         @blur="handleBlur"
         @input="updateHasChanges"
       >
-        {{ isEditing ? undefined : (card.description || 'Add Description') }}
+        {{ isEditing ? '' : (card.description || 'Add Description') }}
       </div>
     </div>
 
@@ -52,7 +52,7 @@
 
       <ActionButton @click="cancelEditing">
         <template #icon>
-          <img src="@/assets/images/clear.svg" alt="Cancel">
+          <img src="@/assets/images/minus.svg" alt="Cancel">
         </template>
         Cancel
       </ActionButton>
@@ -93,7 +93,6 @@ const handleDragStart = (event) => {
 
   isDragging.value = true
 
-  // Простые данные для передачи
   event.dataTransfer.setData('text/plain', JSON.stringify({
     cardId: props.card.id,
     sourceColumnId: props.columnId
