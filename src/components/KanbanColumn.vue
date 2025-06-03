@@ -1,7 +1,6 @@
 <template>
   <div
     class="kanban-column"
-    :class="{ 'kanban-column--drag-over': isDragOver, 'opacity': column.editingDisabled }"
     @dragover="handleDragOver"
     @dragenter="handleDragEnter"
     @dragleave="handleDragLeave"
@@ -12,7 +11,7 @@
         <h3
           ref="titleRef"
           class="kanban-column__title"
-          contenteditable="true"
+          :contenteditable="!column.editingDisabled"
           @blur="saveTitle"
           @keydown.enter.prevent="blurTitle"
           @input="onInput"
@@ -28,10 +27,10 @@
             <img v-if="!column.editingDisabled" src="@/assets/images/pause.svg" alt="Icon">
             <img v-else src="@/assets/images/resume.svg" alt="Icon">
           </template>
-          {{ column.editingDisabled ? 'Enable' : 'Disable' }} Editing
+          {{ column.editingDisabled ? 'Unlock Column' : 'Disable Editing' }}
         </ActionButton>
 
-        <ActionButton v-if="!deleteDisabled" @click="deleteColumn" :disabled="column.editingDisabled">
+        <ActionButton  @click="deleteColumn" :disabled="column.editingDisabled">
           <template #icon>
             <img src="@/assets/images/minus.svg" alt="Delete">
           </template>
@@ -57,10 +56,9 @@
         />
       </div>
 
-      <!-- Показываем линию для вставки в конец, если нужно -->
       <div
         v-if="dropIndex === column.cards.length"
-        class="drop-line"
+        class="drop-box"
       ></div>
     </div>
 
@@ -133,10 +131,6 @@ const saveTitle = (event) => {
     event.target.innerText = props.column.title
   }
 }
-
-const deleteDisabled = computed(() => {
-  return [0, 1, 2].includes(props.column.id)
-})
 
 const emit = defineEmits([
   'update-column',
@@ -324,23 +318,18 @@ const toggleEditing = () => {
   flex-direction: column;
   transition: all 0.3s ease;
   &.opacity{
-    background: #FAFBFC;
-    & .kanban-column__title-wrapper{
+    background: #FBFBFD;
+    & .kanban-column__title-wrapper, .last-updated, .kanban-card{
       opacity: .5;
     }
   }
 
-  &--drag-over {
-    border-color: var(--card-border-color);
-    background: rgba(66, 133, 244, 0.05);
-  }
 }
 
 .kanban-column__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: calc(var(--spacing) * 0.5);
 }
 
 .kanban-column__title-wrapper {
@@ -349,6 +338,10 @@ const toggleEditing = () => {
   font-size: 13px;
   font-weight: 600;
   gap: calc(var(--spacing) * 0.5);
+  max-width: 30%;
+  & .kanban-column__title{
+    word-break: break-all;
+  }
 }
 
 .sort-direction{
@@ -373,30 +366,29 @@ const toggleEditing = () => {
   display: flex;
   flex-direction: column;
   gap: calc(var(--spacing) * 0.75);
-  margin-bottom: var(--spacing);
+  margin: var(--spacing) 0 var(--spacing);
 }
 
 .card-wrapper {
   position: relative;
 
-  &--drop-target::before {
-    content: '';
-    position: absolute;
-    top: -6px;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background-color: var(--card-border-color);
-    border-radius: 2px;
-    z-index: 10;
-  }
+  //&--drop-target::before {
+  //  content: '';
+  //  position: absolute;
+  //  top: -6px;
+  //  left: 0;
+  //  right: 0;
+  //  height: 4px;
+  //  background-color: var(--card-border-color);
+  //  border-radius: 2px;
+  //  z-index: 10;
+  //}
 }
 
-.drop-line {
-  height: 4px;
-  background-color: var(--card-border-color);
-  border-radius: 2px;
-  margin-top: -2px;
+.drop-box {
+  height: 80px;
+  border: 1px dashed var(--card-border-color);
+  border-radius: calc(var(--spacing) * 0.5);
 }
 
 .kanban-column__footer {

@@ -3,9 +3,9 @@ import { getLocalStorage, setLocalStorage } from '@/utils/localStorage'
 import { STORAGE_KEYS } from '@/utils/constants'
 
 const DEFAULT_COLUMNS = [
-  { id: 0, title: 'TODO', color: '#111111', cards: [], editingDisabled: false, sortDirection: 'none' },
-  { id: 1, title: 'In progress', color: '#FFC53D', cards: [], editingDisabled: false, sortDirection: 'none' },
-  { id: 2, title: 'Done', color: '#2B8C5E', cards: [], editingDisabled: false, sortDirection: 'none' }
+  { id: 0, title: 'TODO', cards: [], editingDisabled: false, sortDirection: 'none' },
+  { id: 1, title: 'IN PROGRESS', cards: [], editingDisabled: false, sortDirection: 'none' },
+  { id: 2, title: 'DONE', cards: [], editingDisabled: false, sortDirection: 'none' }
 ]
 export function useKanbanStorage() {
   const boardState = reactive({

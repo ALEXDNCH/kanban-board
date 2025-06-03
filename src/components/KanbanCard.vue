@@ -204,7 +204,7 @@ const deleteCard = () => {
 .kanban-card {
   background: var(--bg-card);
   border: 2px solid transparent;
-  border-radius: var(--border-radius);
+  border-radius: calc(var(--spacing) * 0.5);
   word-wrap: anywhere;
   padding: var(--spacing);
   cursor: pointer;
@@ -212,8 +212,7 @@ const deleteCard = () => {
   position: relative;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
   }
 
   &--dragging {
@@ -301,7 +300,7 @@ const deleteCard = () => {
 .kanban-card__actions {
   display: flex;
   gap: calc(var(--spacing) * 0.5);
-  margin-top: var(--spacing);
+  margin-top: calc(var(--spacing) * 0.5);
 }
 
 .kanban-card__drag-handle {

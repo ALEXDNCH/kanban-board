@@ -25,13 +25,13 @@ defineProps({
 defineEmits(['click'])
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .action-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: calc(var(--spacing) * 0.25);
-  padding: 5px;
+  padding: 5.5px 8px;
   border: 2px solid var(--border-color);
   border-radius: 50px;
   font-size: 13px;
@@ -40,7 +40,7 @@ defineEmits(['click'])
   transition: border-color var(--transition);
   white-space: nowrap;
   background: var(--bg-card);
-  color: var(--color-text);
+  color: var(--color-text-dark);
   font-family: inherit;
 }
 

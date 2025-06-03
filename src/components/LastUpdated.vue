@@ -20,7 +20,7 @@ defineProps({
   font-size: 14px;
   font-weight: 500;
   color: var(--color-text-light);
-  margin-top: 16px;
+  margin-top: var(--spacing);
   text-align: center;
 }
 </style>

@@ -186,23 +186,20 @@ const toggleEditing = () => {
 <style scoped>
 .kanban-board {
   min-height: 100vh;
-  padding: var(--spacing) 0;
+  padding: calc(var(--spacing) * 1.5) 0;
 }
 
 .kanban-board__columns {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   overflow-x: auto;
-  gap: var(--spacing);
-  margin-bottom: calc(var(--spacing) * 2);
-  padding-bottom: var(--spacing);
+  gap: calc(var(--spacing) * 1.5);
 }
 
 .kanban-board__actions {
   position: sticky;
   bottom: 0;
   background: var(--bg-card);
-  padding: var(--spacing);
-  margin: 0 calc(-1 * var(--spacing));
+  padding: calc(var(--spacing) * 1.5) 0;
 }
 </style>

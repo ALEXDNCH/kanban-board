@@ -3,8 +3,9 @@
 
 :root {
 	--color-text: #000;
-	--color-text-light: rgba(0, 0, 0, 0.3);
+	--color-text-dark: rgba(0, 0, 0, 0.9);
 	--color-text-muted: rgba(0, 0, 0, 0.6);
+	--color-text-light: rgba(0, 0, 0, 0.3);
 	--card-border-color: #007AFF;
 
 	--bg-app: #fff;
@@ -15,7 +16,7 @@
 	--main-btn-color: #CED9E3;
 	--main-btn-color-hover: #aebecd;
 
-	--border-radius: 8px;
+	--border-radius: 12px;
 	--spacing: 16px;
 	--shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 	--transition: 0.3s ease;
@@ -34,9 +35,9 @@ body{
 }
 
 .container {
-	max-width: 1400px;
+	max-width: 1440px;
 	margin: 0 auto;
-	padding: 0 8px;
+	padding: 0 calc(var(--spacing) * 1.5);
 }
 
 * {
@@ -58,7 +59,7 @@ body {
 	gap: calc(var(--spacing) * 0.25);
 	padding: calc(var(--spacing) * 0.5);
 	border: none;
-	border-radius: 8px;
+	border-radius: calc(var(--spacing) * 0.5);
 	font-size: 13px;
 	font-weight: 600;
 	cursor: pointer;
