@@ -74,6 +74,28 @@ body {
 		cursor: not-allowed;
 		opacity: 0.5;
 	}
+
+	&.btn--danger {
+		background: #dc3545;
+		color: white;
+		&:hover{
+			background: #f3051b;
+		}
+	}
+}
+
+
+
+.buttons{
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	gap: 10px;
+	& button{
+		width: 100%;
+
+	}
 }
 
 

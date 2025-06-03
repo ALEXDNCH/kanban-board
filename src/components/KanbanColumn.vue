@@ -1,7 +1,7 @@
 <template>
   <div
     class="kanban-column"
-    :class="{ 'kanban-column--drag-over': isDragOver, 'opacity': editingDisabled }"
+    :class="{ 'kanban-column--drag-over': isDragOver, 'opacity': editingDisabled || column.editingDisabled }"
     @dragover="handleDragOver"
     @dragenter="handleDragEnter"
     @dragleave="handleDragLeave"
@@ -16,13 +16,13 @@
       <div class="kanban-column__actions">
         <ActionButton @click="toggleEditing">
           <template #icon>
-            <img v-if="!editingDisabled" src="@/assets/images/pause.svg" alt="Icon">
+            <img v-if="!editingDisabled || !column.editingDisabled" src="@/assets/images/pause.svg" alt="Icon">
             <img v-else src="@/assets/images/resume.svg" alt="Icon">
           </template>
-          {{ editingDisabled ? 'Enable' : 'Disable' }} Editing
+          {{ editingDisabled || column.editingDisabled ? 'Enable' : 'Disable' }} Editing
         </ActionButton>
 
-        <ActionButton @click="deleteColumn" :disabled="editingDisabled">
+        <ActionButton @click="deleteColumn" :disabled="editingDisabled || column.editingDisabled">
           <template #icon>
             <img src="@/assets/images/minus.svg" alt="Delete">
           </template>
@@ -42,7 +42,7 @@
         <KanbanCard
           :card="card"
           :column-id="column.id"
-          :editing-disabled="editingDisabled"
+          :editing-disabled="editingDisabled || column.editingDisabled"
           @update-card="updateCard(card.id, $event)"
           @delete-card="deleteCard(card.id)"
         />
@@ -58,7 +58,7 @@
     <button
       class="btn full-width"
       @click="addCard"
-      :disabled="editingDisabled"
+      :disabled="editingDisabled || column.editingDisabled"
     >
       <img src="@/assets/images/plus.svg" alt="Plus">
       New Card
@@ -66,14 +66,14 @@
 
     <div class="kanban-column__footer">
       <div class="kanban-column__sort-actions">
-        <ActionButton @click="sortCards" :disabled="editingDisabled">
+        <ActionButton @click="sortCards" :disabled="editingDisabled || column.editingDisabled || column.cards.length < 2">
           <template #icon>
             <SortIcon :direction="sortDirection"/>
           </template>
           Sort
         </ActionButton>
 
-        <ActionButton @click="clearAll" :disabled="editingDisabled">
+        <ActionButton @click="clearAll" :disabled="editingDisabled || column.editingDisabled || !column.cards.length">
           <template #icon>
             <img src="@/assets/images/clear.svg" alt="Clear">
           </template>
@@ -89,6 +89,11 @@ import { ref } from 'vue'
 import KanbanCard from './KanbanCard.vue'
 import ActionButton from './UI/Buttons/ActionButton.vue'
 import SortIcon from '@/components/UI/Icons/SortIcon.vue'
+import DeleteColumnModal from '@/components/UI/Modals/DeleteColumnModal.vue'
+import DeleteCardsModal from '@/components/UI/Modals/DeleteCardsModal.vue'
+import { useModal } from '@/composables/useModal'
+
+const { openPopup } = useModal()
 
 const props = defineProps({
   column: { type: Object, required: true },
@@ -228,29 +233,30 @@ const sortCards = () => {
 }
 
 const clearAll = () => {
-  if (confirm(`Вы уверены, что хотите очистить все карточки в колонке "${props.column.title}"?`)) {
-    sortDirection.value = 'none'
-    emit('clear-cards', props.column.id)
-  }
+  openPopup(DeleteCardsModal, {
+    onDelete: () => {
+      emit('clear-cards', props.column.id)
+      sortDirection.value = 'none'
+    }
+  })
 }
 
 const addCard = () => {
-  if (props.editingDisabled) return
+  if (props.editingDisabled || props.column.editingDisabled) return
   emit('add-card', props.column.id, true)
 }
 
 const deleteColumn = () => {
-  const confirmMessage = props.column.cards.length > 0
-    ? `Вы уверены, что хотите удалить колонку "${props.column.title}" со всеми карточками (${props.column.cards.length})?`
-    : `Вы уверены, что хотите удалить колонку "${props.column.title}"?`
-
-  if (confirm(confirmMessage)) {
-    emit('delete-column', props.column.id)
-  }
+  openPopup(DeleteColumnModal, {
+    title: props.column.title,
+    onDelete: () => {
+      emit('delete-column', props.column.id)
+    }
+  })
 }
 
 const toggleEditing = () => {
-  emit('toggle-editing')
+  emit('update-column', props.column.id, { editingDisabled: !props.column.editingDisabled })
 }
 </script>
 

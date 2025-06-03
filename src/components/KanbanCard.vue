@@ -65,7 +65,10 @@
 <script setup>
 import { ref, nextTick, onMounted } from 'vue'
 import ActionButton from './UI/Buttons/ActionButton.vue'
+import { useModal } from '@/composables/useModal'
+import DeleteSingleCard from '@/components/UI/Modals/DeleteSingleCard.vue'
 
+const { openPopup } = useModal()
 const props = defineProps({
   card: { type: Object, required: true },
   columnId: { type: [String, Number], required: true },
@@ -82,7 +85,6 @@ const originalTitle = ref('')
 const originalDescription = ref('')
 const hasChanges = ref(false)
 
-// Drag handlers
 const handleDragStart = (event) => {
   if (isEditing.value || props.editingDisabled) {
     event.preventDefault()
@@ -189,13 +191,13 @@ const handleBlur = (event) => {
 }
 
 const deleteCard = () => {
-  if (props.editingDisabled) return
+  if (props.editingDisabled) return;
 
-  const message = props.card.title
-    ? `Удалить карточку "${props.card.title}"?`
-    : 'Удалить эту карточку?'
-
-  if (confirm(message)) emit('delete-card')
+  openPopup(DeleteSingleCard, {
+    onDelete: () => {
+      emit('delete-card')
+    }
+  })
 }
 </script>
 

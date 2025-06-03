@@ -44,7 +44,8 @@ const addColumn = () => {
   boardState.columns.push({
     id: Date.now(),
     title: 'New Column',
-    cards: []
+    cards: [],
+    editingDisabled: false
   })
 }
 
