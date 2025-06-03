@@ -1,8 +1,8 @@
 <template>
   <div class="sort-icon">
-    <ArrowIcon :class="{ 'sort-icon__arrow--opacity': direction === 'asc' }" />
+    <ArrowIcon :class="{ 'sort-icon__arrow--opacity': direction === 'desc' }" />
     <ArrowIcon
-      :class="{ 'sort-icon__arrow--opacity': direction === 'desc' }"
+      :class="{ 'sort-icon__arrow--opacity': direction === 'asc' }"
       style="transform: rotate(180deg)"
     />
   </div>
@@ -14,8 +14,8 @@ import ArrowIcon from '@/components/UI/Icons/ArrowIcon.vue'
 defineProps({
   direction: {
     type: String,
-    default: 'none',
-    validator: value => ['asc', 'desc', 'none'].includes(value)
+    default: 'desc',
+    validator: value => ['asc', 'desc'].includes(value)
   }
 })
 </script>

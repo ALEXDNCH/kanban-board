@@ -22,7 +22,7 @@
           {{ editingDisabled || column.editingDisabled ? 'Enable' : 'Disable' }} Editing
         </ActionButton>
 
-        <ActionButton @click="deleteColumn" :disabled="editingDisabled || column.editingDisabled">
+        <ActionButton v-if="!deleteDisabled" @click="deleteColumn" :disabled="editingDisabled || column.editingDisabled">
           <template #icon>
             <img src="@/assets/images/minus.svg" alt="Delete">
           </template>
@@ -63,6 +63,7 @@
       <img src="@/assets/images/plus.svg" alt="Plus">
       New Card
     </button>
+    <LastUpdated v-if="newestUpdatedCard" :date="newestUpdatedCard?.updatedAt"/>
 
     <div class="kanban-column__footer">
       <div class="kanban-column__sort-actions">
@@ -85,19 +86,24 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import KanbanCard from './KanbanCard.vue'
 import ActionButton from './UI/Buttons/ActionButton.vue'
 import SortIcon from '@/components/UI/Icons/SortIcon.vue'
 import DeleteColumnModal from '@/components/UI/Modals/DeleteColumnModal.vue'
 import DeleteCardsModal from '@/components/UI/Modals/DeleteCardsModal.vue'
 import { useModal } from '@/composables/useModal'
+import LastUpdated from '@/components/LastUpdated.vue'
 
 const { openPopup } = useModal()
 
 const props = defineProps({
   column: { type: Object, required: true },
   editingDisabled: { type: Boolean, default: false }
+})
+
+const deleteDisabled = computed(() => {
+  return [0, 1, 2].includes(props.column.id)
 })
 
 const emit = defineEmits([
@@ -112,6 +118,16 @@ const emit = defineEmits([
   'clear-cards',
   'toggle-editing'
 ])
+
+const newestUpdatedCard = computed(() => {
+  if (!props.column.cards.length) return null
+  return props.column.cards.reduce((latest, card) => {
+    const latestTime = new Date(latest.updatedAt).getTime()
+    const cardTime = new Date(card.updatedAt).getTime()
+    return cardTime > latestTime ? card : latest
+  }, props.column.cards[0])
+})
+
 
 const isDragOver = ref(false)
 const sortDirection = ref('none')
@@ -224,7 +240,7 @@ const deleteCard = (cardId) => {
 }
 
 const sortCards = () => {
-  if (sortDirection.value === 'none' || sortDirection.value === 'desc') {
+  if (sortDirection.value === 'desc') {
     sortDirection.value = 'asc'
   } else {
     sortDirection.value = 'desc'

@@ -94,6 +94,7 @@ const addCard = (columnId, autoEdit = false) => {
       title: '',
       description: '',
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       autoEdit: autoEdit
     }
     column.cards.push(newCard)
@@ -106,6 +107,7 @@ const updateCard = (columnId, cardId, updates) => {
     const card = column.cards.find(c => c.id === cardId)
     if (card) {
       Object.assign(card, updates)
+      card.updatedAt = new Date().toISOString()
     }
   }
 }
