@@ -58,6 +58,10 @@
           :editing-disabled="column.editingDisabled"
           @update-card="updateCard(card.id, $event)"
           @delete-card="deleteCard(card.id)"
+          draggable="true"
+          @dragstart="onCardDragStart(card)"
+          @dragend="onCardDragEnd"
+          @dragover="(e)=>onCardDragOver(e, index)"
         />
       </div>
     </div>
@@ -179,6 +183,42 @@ const newestUpdatedCard = computed(() => {
     return cardTime > latestTime ? card : latest
   }, props.column.cards[0])
 })
+
+const dragCardId = ref(null);
+
+const onCardDragStart = (card) => {
+  dragCardId.value = card.id;
+};
+
+const onCardDragEnd = () => {
+  dragCardId.value = null;
+};
+
+const onCardDragOver = (event, idx) => {
+  if (props.column.editingDisabled || !dragCardId.value) return;
+
+  const draggedId = dragCardId.value;
+  if (draggedId === props.column.cards[idx].id) return;
+
+  const cardRect = event.target.getBoundingClientRect();
+  const offset = event.clientY - cardRect.top;
+  const half = cardRect.height / 2;
+  let newIndex = idx;
+  if (offset > half) {
+    newIndex += 1;
+  }
+
+  const currentIndex = props.column.cards.findIndex(c => c.id === draggedId);
+  if (currentIndex !== newIndex && currentIndex !== newIndex - 1) {
+    emit('reorder-card', {
+      columnId: props.column.id,
+      cardId: draggedId,
+      newIndex
+    });
+    dragCardId.value = null; // иначе карточка дрожит
+  }
+};
+
 
 
 const isDragOver = ref(false)
@@ -354,7 +394,7 @@ const toggleEditing = () => {
     }
   }
   &--blocked-drag {
-    border-color: var(--color-red, #dc3545);
+    border-color: var(--color-red);
   }
 }
 

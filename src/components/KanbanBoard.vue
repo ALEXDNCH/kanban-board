@@ -138,29 +138,6 @@ const deleteCard = (columnId, cardId) => {
   }
 }
 
-// const moveCard = (moveData) => {
-//   const { cardId, sourceColumnId, targetColumnId, targetIndex } = moveData
-//
-//   const sourceColumn = boardState.columns.find(c => c.id === sourceColumnId)
-//   const targetColumn = boardState.columns.find(c => c.id === targetColumnId)
-//
-//
-//   if (sourceColumn && targetColumn) {
-//     targetColumn.sortDirection = 'none'
-//     const cardIndex = sourceColumn.cards.findIndex(c => c.id === cardId)
-//
-//     if (cardIndex > -1) {
-//       const [card] = sourceColumn.cards.splice(cardIndex, 1)
-//
-//       // Вставляем в конкретную позицию или в конец
-//       const insertIndex = targetIndex !== undefined ? targetIndex : targetColumn.cards.length
-//       targetColumn.cards.splice(insertIndex, 0, card)
-//
-//       console.log(`Moved card ${cardId} from ${sourceColumnId} to ${targetColumnId} at index ${insertIndex}`)
-//     }
-//   }
-// }
-
 const moveCard = (moveData) => {
   const { cardId, sourceColumnId, targetColumnId, targetIndex } = moveData
 
