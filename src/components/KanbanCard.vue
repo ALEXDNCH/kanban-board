@@ -9,7 +9,7 @@
     @dragstart="handleDragStart"
     @dragend="handleDragEnd"
     @dblclick="startEditing"
-    @contextmenu.prevent="deleteCard"
+    @contextmenu.prevent="openDeletePopup"
   >
     <h2
       ref="titleRef"
@@ -18,9 +18,7 @@
       @keydown="handleKeydown"
       @blur="handleBlur"
       @input="updateHasChanges"
-    >
-      {{ isEditing ? '' : card.title }}
-    </h2>
+    >{{ isEditing ? '' : card.title }}</h2>
 
     <div class="kanban-card__description">
       <div
@@ -34,9 +32,7 @@
         @keydown="handleKeydown"
         @blur="handleBlur"
         @input="updateHasChanges"
-      >
-        {{ isEditing ? '' : (card.description || 'Add Description') }}
-      </div>
+      >{{ isEditing ? '' : (card.description || 'Add Description') }}</div>
     </div>
 
     <div class="kanban-card__actions" v-if="isEditing">
@@ -74,7 +70,6 @@ const props = defineProps({
   columnId: { type: [String, Number], required: true },
   editingDisabled: { type: Boolean, default: false }
 })
-
 const emit = defineEmits(['update-card', 'delete-card'])
 
 const isDragging = ref(false)
@@ -84,47 +79,98 @@ const descriptionRef = ref(null)
 const originalTitle = ref('')
 const originalDescription = ref('')
 const hasChanges = ref(false)
+const justCreated = ref(false)
+
+onMounted(async () => {
+  if (props.card.autoEdit && !props.editingDisabled) {
+    justCreated.value = true
+    isEditing.value = true
+    originalTitle.value = ''
+    originalDescription.value = ''
+    await nextTick()
+    if (titleRef.value) titleRef.value.focus()
+  }
+})
 
 const handleDragStart = (event) => {
   if (isEditing.value || props.editingDisabled) {
     event.preventDefault()
     return
   }
-
   isDragging.value = true
-
   event.dataTransfer.setData('text/plain', JSON.stringify({
     cardId: props.card.id,
     sourceColumnId: props.columnId
   }))
 }
 
-const handleDragEnd = () => {
-  isDragging.value = false
-  console.log('Drag ended')
-}
+const handleDragEnd = () => { isDragging.value = false }
 
-const updateHasChanges = () => {
+function updateHasChanges() {
   if (!isEditing.value) return
-
-  const currentTitle = titleRef.value?.innerHTML?.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').trim() || ''
-  const currentDescription = descriptionRef.value?.innerHTML?.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').trim() || ''
-
+  const currentTitle = titleRef.value?.innerText.trim() || ''
+  const currentDescription = descriptionRef.value?.innerText.trim() || ''
   hasChanges.value = currentTitle !== originalTitle.value ||
     currentDescription !== originalDescription.value
 }
 
-onMounted(() => {
-  if (props.card.autoEdit && !props.editingDisabled) {
-    startEditing()
-    emit('update-card', { autoEdit: false })
+async function startEditing() {
+  if (props.editingDisabled) return
+  isEditing.value = true
+  originalTitle.value = props.card.title || ''
+  originalDescription.value = props.card.description || ''
+  hasChanges.value = false
+  await nextTick()
+  if (titleRef.value) {
+    titleRef.value.innerText = originalTitle.value
+    titleRef.value.focus()
   }
-})
+  if (descriptionRef.value) {
+    descriptionRef.value.innerText = originalDescription.value
+  }
+}
 
-const handleKeydown = (event) => {
+function saveChanges() {
+  if (!isEditing.value) return
+  const newTitle = titleRef.value?.innerText.trim() || ''
+  const newDescription = descriptionRef.value?.innerText.trim() || ''
+  // Не даём создать пустую карточку
+  if (!newTitle && justCreated.value) {
+    emit('delete-card')
+    isEditing.value = false
+    justCreated.value = false
+    return
+  }
+  // Сохраняем только если есть изменения
+  emit('update-card', {
+    title: newTitle,
+    description: newDescription,
+    autoEdit: false
+  })
+  isEditing.value = false
+  hasChanges.value = false
+  justCreated.value = false
+}
+
+function cancelEditing() {
+
+  if (justCreated.value) {
+    emit('delete-card')
+    isEditing.value = false
+    justCreated.value = false
+    return
+  }
+  isEditing.value = false
+  hasChanges.value = false
+}
+
+function handleKeydown(event) {
   if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey) {
     event.preventDefault()
     saveChanges()
+  } else if (event.key === 'Escape') {
+    event.preventDefault()
+    cancelEditing()
   } else if (event.key === 'Tab' && !event.shiftKey) {
     event.preventDefault()
     if (event.target === titleRef.value) {
@@ -135,70 +181,33 @@ const handleKeydown = (event) => {
     if (event.target === descriptionRef.value) {
       titleRef.value?.focus()
     }
-  } else if (event.key === 'Escape') {
-    event.preventDefault()
-    cancelEditing()
   }
 }
 
-const startEditing = async () => {
-  if (props.editingDisabled) return
-
-  isEditing.value = true
-  originalTitle.value = props.card.title || ''
-  originalDescription.value = props.card.description || ''
-  hasChanges.value = false
-
-  await nextTick()
-
-  if (titleRef.value) {
-    titleRef.value.focus()
-    titleRef.value.innerHTML = originalTitle.value.replace(/\n/g, '<br>')
-  }
-
-  if (descriptionRef.value) {
-    descriptionRef.value.innerHTML = originalDescription.value.replace(/\n/g, '<br>')
-  }
-}
-
-const saveChanges = () => {
-  if (!isEditing.value) return
-
-  const newTitle = titleRef.value?.innerHTML?.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').trim() || ''
-  const newDescription = descriptionRef.value?.innerHTML?.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').trim() || ''
-
-  emit('update-card', { title: newTitle, description: newDescription })
-
-  isEditing.value = false
-  hasChanges.value = false
-}
-
-const cancelEditing = () => {
-  isEditing.value = false
-  hasChanges.value = false
-}
-
-const handleBlur = (event) => {
+function handleBlur(event) {
   setTimeout(() => {
     const activeElement = document.activeElement
     const cardElement = event.target.closest('.kanban-card')
-
     if (!cardElement?.contains(activeElement)) {
-      hasChanges.value ? saveChanges() : cancelEditing()
+      if (justCreated.value) {
+        emit('delete-card')
+        isEditing.value = false
+        justCreated.value = false
+      } else {
+        hasChanges.value ? saveChanges() : cancelEditing()
+      }
     }
   }, 100)
 }
 
-const deleteCard = () => {
+function openDeletePopup() {
   if (props.editingDisabled) return;
-
   openPopup(DeleteSingleCard, {
-    onDelete: () => {
-      emit('delete-card')
-    }
+    onDelete: () => { emit('delete-card') }
   })
 }
 </script>
+
 
 <style scoped lang="scss">
 .kanban-card {
@@ -212,7 +221,7 @@ const deleteCard = () => {
   position: relative;
 
   &:hover {
-    transform: translateY(-1px);
+    border-color: var(--card-border-color);
   }
 
   &--dragging {

@@ -17,9 +17,8 @@
           ref="titleRef"
           class="kanban-column__title"
           :contenteditable="!column.editingDisabled"
-          @blur="saveTitle"
-          @keydown.enter.prevent="blurTitle"
-          @input="onInput"
+          @blur="onBlur"
+          @keydown.enter="onEnter"
         >
           {{ column.title }}
         </h3>
@@ -124,7 +123,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import KanbanCard from './KanbanCard.vue'
 import ActionButton from './UI/Buttons/ActionButton.vue'
 import SortIcon from '@/components/UI/Icons/SortIcon.vue'
@@ -158,21 +157,27 @@ const emit = defineEmits([
 ])
 
 const titleRef = ref(null)
-const lastValue = ref(props.column.title)
+const originalTitle = ref(props.column.title)
 
-const blurTitle = () => {
-  titleRef.value && titleRef.value.blur()
-}
-const onInput = (event) => {
-  lastValue.value = event.target.innerText.trim()
-}
-const saveTitle = (event) => {
-  const newTitle = (event?.target?.innerText || '').trim()
-  if (newTitle && newTitle !== props.column.title) {
-    emit('update-column', props.column.id, { title: newTitle })
-  } else if (!newTitle) {
-    event.target.innerText = props.column.title
+watch(() => props.column.title, val => { originalTitle.value = val })
+
+const blurTitle = () => { titleRef.value && titleRef.value.blur() }
+
+const onBlur = (e) => {
+  const current = (e?.target?.innerText || '').trim()
+  if (current && current !== originalTitle.value) {
+    // Не сохраняем, сбрасываем к оригиналу
+    e.target.innerText = originalTitle.value
   }
+}
+const onEnter = (e) => {
+  e.preventDefault()
+  const newTitle = (titleRef.value?.innerText || '').trim()
+  if (newTitle && newTitle !== originalTitle.value) {
+    emit('update-column', props.column.id, { title: newTitle })
+    originalTitle.value = newTitle
+  }
+  blurTitle()
 }
 
 const newestUpdatedCard = computed(() => {
@@ -488,6 +493,7 @@ const toggleEditing = () => {
   display: flex;
   flex: 1;
   align-items: center;
+  justify-content: center;
   gap: calc(var(--spacing) * 0.5);
 }
 </style>
