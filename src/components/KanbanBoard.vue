@@ -160,6 +160,7 @@ const clearCards = (columnId) => {
     column.cards = []
   }
 }
+
 // shuffle
 function fisherYatesShuffle(arr) {
   const result = [...arr]
@@ -185,7 +186,7 @@ const shuffleColumns = () => {
 
 const shuffleCards = () => {
   boardState.columns.forEach(column => {
-    column.cards = [...column.cards].sort(() => Math.random() - 0.5)
+    column.cards = guaranteedShuffle(column.cards)
     column.sortDirection = 'none'
   })
 }

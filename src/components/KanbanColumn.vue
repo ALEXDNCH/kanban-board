@@ -1,6 +1,7 @@
 <template>
   <div
     class="kanban-column"
+    :class="{ 'kanban-column--drag-over': isDragOver, 'opacity': column.editingDisabled }"
     @dragover="handleDragOver"
     @dragenter="handleDragEnter"
     @dragleave="handleDragLeave"
@@ -83,7 +84,7 @@
             class="sort-direction"
             v-if="sortDirection !== 'none'"
           >
-            {{sortDirection}}
+            {{sortDirection === 'desc' ? 'Descending' : 'Ascending'}}
           </span>
         </ActionButton>
 
@@ -375,7 +376,6 @@ const toggleEditing = () => {
   //&--drop-target::before {
   //  content: '';
   //  position: absolute;
-  //  top: -6px;
   //  left: 0;
   //  right: 0;
   //  height: 4px;
