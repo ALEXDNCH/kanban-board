@@ -1,7 +1,11 @@
 <template>
   <div
     class="kanban-column"
-    :class="{ 'kanban-column--drag-over': isDragOver, 'opacity': column.editingDisabled }"
+    :class="{
+    'kanban-column--drag-over': isDragOver,
+    'kanban-column--blocked-drag': isDragOver && column.editingDisabled,
+    'opacity': column.editingDisabled
+  }"
     @dragover="handleDragOver"
     @dragenter="handleDragEnter"
     @dragleave="handleDragLeave"
@@ -56,11 +60,6 @@
           @delete-card="deleteCard(card.id)"
         />
       </div>
-
-      <div
-        v-if="dropIndex === column.cards.length"
-        class="drop-box"
-      ></div>
     </div>
 
     <button
@@ -74,6 +73,7 @@
     <LastUpdated v-if="newestUpdatedCard" :date="newestUpdatedCard?.updatedAt"/>
 
     <div class="kanban-column__footer">
+      <div class="footer-spacer"></div>
       <div class="kanban-column__sort-actions">
         <ActionButton @click="sortCards" :disabled="column.editingDisabled || column.cards.length < 2">
           <template #icon>
@@ -344,13 +344,18 @@ const toggleEditing = () => {
   width: 100%;
   flex-direction: column;
   transition: all 0.3s ease;
+  &--drag-over {
+    border-color: var(--card-border-color);
+  }
   &.opacity{
     background: #FBFBFD;
     & .kanban-column__title-wrapper, .last-updated, .kanban-card{
       opacity: .5;
     }
   }
-
+  &--blocked-drag {
+    border-color: var(--color-red, #dc3545);
+  }
 }
 
 .kanban-column__header {
@@ -401,37 +406,38 @@ const toggleEditing = () => {
 .card-wrapper {
   position: relative;
 
-  //&--drop-target::before {
-  //  content: '';
-  //  position: absolute;
-  //  left: 0;
-  //  right: 0;
-  //  height: 4px;
-  //  background-color: var(--card-border-color);
-  //  border-radius: 2px;
-  //  z-index: 10;
-  //}
+  &--drop-target::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background-color: var(--card-border-color);
+    border-radius: 2px;
+    z-index: 10;
+  }
 }
 
-.drop-box {
-  height: 80px;
-  border: 1px dashed var(--card-border-color);
-  border-radius: calc(var(--spacing) * 0.5);
-}
 
 .kanban-column__footer {
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  justify-content: space-between;
   gap: calc(var(--spacing) * 0.5);
   margin-top: auto;
   padding-top: 10px;
 }
 
+
+.footer-spacer {
+  flex: 0.3;
+}
+
 .arrow-btn__wrapper{
   display: flex;
+  flex: 0.3;
   align-items: center;
-  gap: 4px;
+  gap: 1px;
 }
 
 .full-width {
@@ -440,6 +446,7 @@ const toggleEditing = () => {
 
 .kanban-column__sort-actions {
   display: flex;
+  flex: 1;
   align-items: center;
   gap: calc(var(--spacing) * 0.5);
 }

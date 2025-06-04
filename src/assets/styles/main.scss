@@ -6,6 +6,8 @@
 	--color-text-dark: rgba(0, 0, 0, 0.9);
 	--color-text-muted: rgba(0, 0, 0, 0.6);
 	--color-text-light: rgba(0, 0, 0, 0.3);
+	--color-red: #dc3545;
+	--color-red-hover: #f3051b;
 	--card-border-color: #007AFF;
 
 	--bg-app: #fff;
@@ -78,10 +80,10 @@ body {
 	}
 
 	&.btn--danger {
-		background: #dc3545;
+		background: var(--color-red);
 		color: white;
 		&:hover{
-			background: #f3051b;
+			background: var(--color-red-hover);
 		}
 	}
 }
