@@ -223,7 +223,7 @@ function openDeletePopup() {
   position: relative;
 
   &:hover {
-    border-color: var(--card-border-color);
+    transform: translateY(-2px);
   }
 
   &--dragging {
