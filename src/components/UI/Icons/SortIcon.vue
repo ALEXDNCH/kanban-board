@@ -14,8 +14,8 @@ import ArrowIcon from '@/components/UI/Icons/ArrowIcon.vue'
 defineProps({
   direction: {
     type: String,
-    default: 'desc',
-    validator: value => ['asc', 'desc'].includes(value)
+    default: 'none',
+    validator: value => ['asc', 'desc', 'none'].includes(value)
   }
 })
 </script>

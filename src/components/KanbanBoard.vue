@@ -160,9 +160,27 @@ const clearCards = (columnId) => {
     column.cards = []
   }
 }
+// shuffle
+function fisherYatesShuffle(arr) {
+  const result = [...arr]
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result
+}
+
+function guaranteedShuffle(arr) {
+  if (arr.length < 2) return arr.slice()
+  let shuffled
+  do {
+    shuffled = fisherYatesShuffle(arr)
+  } while (shuffled.every((item, idx) => item === arr[idx]))
+  return shuffled
+}
 
 const shuffleColumns = () => {
-  boardState.columns = [...boardState.columns].sort(() => Math.random() - 0.5)
+  boardState.columns = guaranteedShuffle(boardState.columns)
 }
 
 const shuffleCards = () => {

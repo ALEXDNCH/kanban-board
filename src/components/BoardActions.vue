@@ -44,7 +44,7 @@ defineProps({
     default: false
   }
 })
-defineEmits(['toggle-editing'])
+defineEmits(['toggle-editing', 'shuffle-cards', 'shuffle-columns', 'new-column'])
 </script>
 
 <style scoped lang="scss">
