@@ -61,6 +61,7 @@ body {
 	border: none;
 	border-radius: calc(var(--spacing) * 0.5);
 	font-size: 13px;
+	min-height: 32px;
 	font-weight: 600;
 	cursor: pointer;
 	transition: background-color var(--transition);
@@ -85,8 +86,6 @@ body {
 	}
 }
 
-
-
 .buttons{
 	display: flex;
 	align-items: center;
@@ -97,6 +96,17 @@ body {
 		width: 100%;
 
 	}
+}
+
+.arrow-btn {
+	min-width: 28px;
+	min-height: 28px;
+	padding: 3px;
+	background: transparent;
+}
+.arrow-btn[disabled] {
+	opacity: .3;
+	pointer-events: none;
 }
 
 

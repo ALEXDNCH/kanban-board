@@ -95,6 +95,26 @@
           Clear All
         </ActionButton>
       </div>
+      <div class="arrow-btn__wrapper">
+        <ActionButton
+          class="arrow-btn"
+          @click="$emit('move-left')"
+          :disabled="isFirst || column.editingDisabled"
+        >
+          <template #icon>
+            <svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M15.5 5l-7 7 7 7"/></svg>
+          </template>
+        </ActionButton>
+        <ActionButton
+          class="arrow-btn"
+          @click="$emit('move-right')"
+          :disabled="isLast || column.editingDisabled"
+        >
+          <template #icon>
+            <svg width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M8.5 19l7-7-7-7"/></svg>
+          </template>
+        </ActionButton>
+      </div>
     </div>
   </div>
 </template>
@@ -113,7 +133,25 @@ const { openPopup } = useModal()
 
 const props = defineProps({
   column: { type: Object, required: true },
+  isFirst: Boolean,
+  isLast: Boolean,
+  index: Number,
 })
+
+const emit = defineEmits([
+  'update-column',
+  'delete-column',
+  'add-card',
+  'update-card',
+  'delete-card',
+  'move-card',
+  'reorder-card',
+  'sort-cards',
+  'clear-cards',
+  'toggle-editing',
+  'move-left',
+  'move-right'
+])
 
 const titleRef = ref(null)
 const lastValue = ref(props.column.title)
@@ -132,19 +170,6 @@ const saveTitle = (event) => {
     event.target.innerText = props.column.title
   }
 }
-
-const emit = defineEmits([
-  'update-column',
-  'delete-column',
-  'add-card',
-  'update-card',
-  'delete-card',
-  'move-card',
-  'reorder-card',
-  'sort-cards',
-  'clear-cards',
-  'toggle-editing'
-])
 
 const newestUpdatedCard = computed(() => {
   if (!props.column.cards.length) return null
@@ -312,7 +337,8 @@ const toggleEditing = () => {
   border-radius: var(--border-radius);
   border: 2px dashed transparent;
   padding: var(--spacing);
-  min-height: 600px;
+  min-height: 400px;
+  max-height: 600px;
   display: flex;
   min-width: 440px;
   width: 100%;
@@ -367,7 +393,9 @@ const toggleEditing = () => {
   display: flex;
   flex-direction: column;
   gap: calc(var(--spacing) * 0.75);
-  margin: var(--spacing) 0 var(--spacing);
+  margin: var(--spacing) 0 calc(var(--spacing) * 0.5);
+  max-height: 70%;
+  overflow: auto;
 }
 
 .card-wrapper {
@@ -393,9 +421,17 @@ const toggleEditing = () => {
 
 .kanban-column__footer {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
   gap: calc(var(--spacing) * 0.5);
   margin-top: auto;
+  padding-top: 10px;
+}
+
+.arrow-btn__wrapper{
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .full-width {
@@ -403,7 +439,6 @@ const toggleEditing = () => {
 }
 
 .kanban-column__sort-actions {
-  margin: 10px auto 0;
   display: flex;
   align-items: center;
   gap: calc(var(--spacing) * 0.5);

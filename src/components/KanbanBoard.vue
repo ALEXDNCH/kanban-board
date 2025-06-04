@@ -3,9 +3,14 @@
     <div class="container">
       <div class="kanban-board__columns">
         <KanbanColumn
-          v-for="column in boardState.columns"
+          v-for="(column, i) in boardState.columns"
           :key="column.id"
           :column="column"
+          :index="i"
+          :is-first="i === 0"
+          :is-last="i === boardState.columns.length - 1"
+          @move-left="moveColumn(column.id, 'left')"
+          @move-right="moveColumn(column.id, 'right')"
           @update-column="updateColumn"
           @delete-column="deleteColumn"
           @add-card="addCard"
@@ -68,6 +73,19 @@ const reorderCard = (reorderData) => {
   }
 }
 
+const moveColumn = (columnId, direction) => {
+  const idx = boardState.columns.findIndex(c => c.id === columnId)
+  if (idx === -1) return
+
+  if (
+    (direction === 'left' && idx === 0) ||
+    (direction === 'right' && idx === boardState.columns.length - 1)
+  ) return
+
+  const newIdx = direction === 'left' ? idx - 1 : idx + 1
+  const columns = boardState.columns;
+  [columns[idx], columns[newIdx]] = [columns[newIdx], columns[idx]]
+}
 
 
 const updateColumn = (columnId, updates) => {
