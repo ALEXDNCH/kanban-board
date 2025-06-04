@@ -127,8 +127,7 @@ import { computed, ref, watch } from 'vue'
 import KanbanCard from './KanbanCard.vue'
 import ActionButton from './UI/Buttons/ActionButton.vue'
 import SortIcon from '@/components/UI/Icons/SortIcon.vue'
-import DeleteColumnModal from '@/components/UI/Modals/DeleteColumnModal.vue'
-import DeleteCardsModal from '@/components/UI/Modals/DeleteCardsModal.vue'
+import ConfirmModal from '@/components/UI/Modals/ConfirmModal.vue'
 import { useModal } from '@/composables/useModal'
 import LastUpdated from '@/components/LastUpdated.vue'
 
@@ -170,6 +169,7 @@ const onBlur = (e) => {
     e.target.innerText = originalTitle.value
   }
 }
+
 const onEnter = (e) => {
   e.preventDefault()
   const newTitle = (titleRef.value?.innerText || '').trim()
@@ -349,8 +349,11 @@ const sortCards = () => {
 }
 
 const clearAll = () => {
-  openPopup(DeleteCardsModal, {
-    onDelete: () => {
+  openPopup(ConfirmModal, {
+    title: 'Очистить все задания',
+    body: `Вы уверены, что хотите очистить все задания в колонке "${props.column.title}"?`,
+    okText: 'Очистить',
+    onOk: () => {
       emit('clear-cards', props.column.id)
       sortDirection.value = 'none'
     }
@@ -363,11 +366,10 @@ const addCard = () => {
 }
 
 const deleteColumn = () => {
-  openPopup(DeleteColumnModal, {
-    title: props.column.title,
-    onDelete: () => {
-      emit('delete-column', props.column.id)
-    }
+  openPopup(ConfirmModal, {
+    title: 'Удаление колонки',
+    body: `Вы уверены, что хотите удалить колонку "${props.column.title}"?`,
+    onOk: () => emit('delete-column', props.column.id)
   })
 }
 

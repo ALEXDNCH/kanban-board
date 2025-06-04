@@ -62,7 +62,7 @@
 import { ref, nextTick, onMounted } from 'vue'
 import ActionButton from './UI/Buttons/ActionButton.vue'
 import { useModal } from '@/composables/useModal'
-import DeleteSingleCard from '@/components/UI/Modals/DeleteSingleCard.vue'
+import ConfirmModal from '@/components/UI/Modals/ConfirmModal.vue'
 
 const { openPopup } = useModal()
 const props = defineProps({
@@ -202,8 +202,10 @@ function handleBlur(event) {
 
 function openDeletePopup() {
   if (props.editingDisabled) return;
-  openPopup(DeleteSingleCard, {
-    onDelete: () => { emit('delete-card') }
+  openPopup(ConfirmModal, {
+    title: 'Удаление задания',
+    body: `Вы уверены, что хотите удалить текущее задание?`,
+    onOk: () => emit('delete-card')
   })
 }
 </script>
